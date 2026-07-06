@@ -16,11 +16,9 @@ The tutorial uses example data objects saved in [`data/`](../data/). For the mor
 
 ## 1. Barcode Identification
 
-Source folder: [`barcode_detection/`](../barcode_detection/)
+Please refer to the more in-depth write-up [here](../barcode_detection/).
 
-Transgene calling can be done by searching reads directly for barcode sequences. The core logic is to scan each read for a known barcode or its reverse complement, collect cell barcode and UMI tags, and then count unique UMIs per transgene per cell.
-
-Example command:
+Briefly, if you have your barcodes amplified in a bespoke library, you can make use of Cell Ranger's feature reference quantification. If you have to identify the presence of barcodes from a GEX library, a catch-all solution is the `parse_barcodes.py` script:
 
 ```bash
 python barcode_detection/parse_barcodes.py \
@@ -29,47 +27,9 @@ python barcode_detection/parse_barcodes.py \
   --csv barcode_counts.csv
 ```
 
-Main parser logic:
+The core logic is to scan each read for a known barcode or its reverse complement, collect cell barcode and UMI tags, and then count unique UMIs per transgene per cell.
 
-```python
-import pandas as pd
-import pysam
-
-def has_barcode(read, seqdict, rcseqdict):
-    for bc in seqdict:
-        if bc in read.seq:
-            return seqdict[bc]
-    for rc in rcseqdict:
-        if rc in read.seq:
-            return rcseqdict[rc]
-    return ""
-
-def parse_barcodes(bam, seq):
-    seqdict = seq.to_dict()[seq.columns[0]]
-    rcseqdict = {
-        bc.translate(str.maketrans("ATGC", "TACG"))[::-1]: seqdict[bc]
-        for bc in seqdict
-    }
-
-    parsed = {}
-    bam_file = pysam.AlignmentFile(bam, "rb")
-
-    for read in bam_file.fetch(until_eof=True):
-        bc = has_barcode(read, seqdict, rcseqdict)
-        if bc == "":
-            continue
-
-        if read.has_tag("CB") and read.has_tag("UB"):
-            cb = read.get_tag("CB")
-            umi = read.get_tag("UB")
-            parsed.setdefault(bc, {}).setdefault(cb, []).append(umi)
-
-    for bc in parsed:
-        for cb in parsed[bc]:
-            parsed[bc][cb] = len(set(parsed[bc][cb]))
-
-    return pd.DataFrame(parsed).fillna(0).astype(int).sort_index()
-```
+It's also possible to identify the presence of barcodes in GEX libraries by inserting exogenous sequences into the reference used for quantification. Best practices for that are detailed in the in-depth instructions.
 
 For the large-scale screen, PacBio reads were used to reconstruct barcode-transgene relationships before generating a Cell Ranger feature reference. The main long-read steps are:
 
