@@ -71,8 +71,10 @@ paf.to_csv("mapped_cleaned.paf")
 ```
 
 ```bash
-python3 find-barcodes-clean-paf.py reads.fastq mapped_cleaned.paf barcodes.csv
+python3 barcode_detection/longread/find-barcodes-clean-paf.py reads.fastq mapped_cleaned.paf barcodes.csv
 ```
+
+The identified barcode-transgene pairs are then converted to a Cell Ranger feature reference, requiring the barcode to be between 10 and 14bp long and the barcode-transgene pair to have more than 10 reads supporting it. Syntax for the feature reference creation can be found [here](../barcode_detection/longread/N09-feature-reference-2.0.ipynb).
 
 ### Calling TF barcodes in the pooled TF screen
 
