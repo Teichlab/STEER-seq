@@ -192,7 +192,7 @@ import matplotlib.pyplot as plt
 ```
 
 ```python
-adata = sc.read("data/pool_scvi_celltypist_v2.h5ad")
+adata = sc.read("data/pool_scvi_celltypist_v2_tutorial_connectivity.h5ad")
 ```
 
 ```python
@@ -201,11 +201,7 @@ adata_select = adata[adata.obs["HSC_days"] == day_select]
 ```
 
 ```python
-tf_list = [
-    tf
-    for tf in adata_select.obs["TF_calling"].cat.categories
-    if tf in adata.var_names
-]
+tf_list = adata_select.obs["TF_calling"].cat.categories
 
 conn = adata_select.obsp["connectivities"].tocsr()
 
@@ -268,7 +264,7 @@ plt.ylabel("Number of TFs")
 plt.title(f"Day {day_select}")
 ```
 
-Example output generated from `data/pool_scvi_celltypist_v2.h5ad`:
+Example output generated from `data/pool_scvi_celltypist_v2_tutorial_connectivity.h5ad`:
 
 ![Observed TF connectivity vs random background](assets/section2_connectivity_histogram.png)
 
@@ -276,7 +272,7 @@ The observed within-TF connectivity is shifted above the random background:
 
 | day | n_tfs_tested | Mann-Whitney U | p-value | median TF connectivity | median background connectivity |
 |--:|--:|--:|--:|--:|--:|
-| 18 | 349 | 106397 | 1.04e-71 | 0.00136 | 0.00000 |
+| 18 | 350 | 106780 | 3.73e-71 | 0.00136 | 0.00000 |
 
 The top TFs by observed within-group connectivity are:
 
@@ -419,6 +415,8 @@ Source notebook: code/MULTIOME/[`DEG_enrichment_panfetal.ipynb`](../code/MULTIOM
 
 This notebook scores perturbation DEGs against pan-fetal cell type programs to connect in vitro perturbation effects with in vivo lineage signatures.
 
+The pan-fetal stromal reference object used here is downloaded from the Developmental Cell Atlas fetal immune study: <https://developmental.cellatlas.io/studies/fetal-immune>. Save the downloaded object as `data/PAN.A01.v01.raw_count.20210429.STROMA.embedding.h5ad` before running this section.
+
 ```python
 import scanpy as sc
 import pandas as pd
@@ -514,7 +512,7 @@ enr_up = gp.enrichr(
 enr_up.res2d.head(10)
 ```
 
-Example output generated from `data/PAN.A01.v01.raw_count.20210429.STROMA.embedding.h5ad` and `data/ipsc_multiome_tf_degs_wilcoxon.csv`:
+Example output generated using the pan-fetal stromal reference from <https://developmental.cellatlas.io/studies/fetal-immune> and `data/ipsc_multiome_tf_degs_wilcoxon.csv`:
 
 ![RUNX2 DEG score on pan-fetal stroma UMAP](assets/section4_runx2_score_umap.png)
 

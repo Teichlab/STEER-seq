@@ -1,2 +1,2 @@
 day,n_tfs_tested,mannwhitneyu_statistic,mannwhitneyu_pvalue,median_mean_connectivity,median_background_connectivity
-18,349,106397.0,1.0421931853519278e-71,0.001358873792923987,0.0
+18,350,106780.0,3.726594858343847e-71,0.001355089247226715,0.0
