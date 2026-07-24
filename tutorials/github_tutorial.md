@@ -551,6 +551,9 @@ This section visualises SCENIC+ eRegulon activity, target-region overlap, and pe
 
 ```python
 import dill
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
 from scenicplus.dimensionality_reduction import (
     run_eRegulons_umap,
     run_eRegulons_tsne,
@@ -559,7 +562,7 @@ from scenicplus.dimensionality_reduction import (
 )
 from scenicplus.plotting.correlation_plot import jaccard_heatmap
 from pycisTopic.diff_features import find_highly_variable_features
-from scenicplus.networks import create_nx_tables, create_nx_graph, plot_networkx
+from scenicplus.networks import create_nx_tables, create_nx_graph
 ```
 
 ```python
@@ -658,14 +661,224 @@ nx_tables = create_nx_tables(
     add_differential_region_accessibility=True,
     differential_variable=["GEX_perturbation"],
 )
+```
 
+```python
+dar_grn_deg = pd.read_csv("DAR_DEG_GRN.csv")
+dar_grn_deg = dar_grn_deg[dar_grn_deg["Cell_type"] == "RUNX2"]
+```
+
+```python
+import matplotlib.cm as cm
+import matplotlib.colors as mcolors
+
+colors = np.vstack([
+    cm.RdGy_r(np.linspace(0.0, 0.4, 128)),
+    cm.RdGy_r(np.linspace(0.5, 1.0, 128)),
+])
+truncated_clr = mcolors.LinearSegmentedColormap.from_list("truncated", colors)
+```
+
+```python
+gene_fc = (
+    dar_grn_deg[["Gene", "deg_logFC"]]
+    .dropna()
+    .drop_duplicates("Gene")
+    .rename(columns={"deg_logFC": "log2fc_deg"})
+)
+
+region_fc = (
+    dar_grn_deg[["Region", "Log2FC"]]
+    .dropna()
+    .drop_duplicates("Region")
+    .rename(columns={"Log2FC": "log2fc_dar"})
+)
+
+nx_tables["Node"]["Gene"] = nx_tables["Node"]["Gene"].merge(
+    gene_fc,
+    on="Gene",
+    how="left",
+)
+
+nx_tables["Node"]["Region"] = nx_tables["Node"]["Region"].merge(
+    region_fc,
+    on="Region",
+    how="left",
+)
+```
+
+```python
+gene_stats = (
+    dar_grn_deg[["Gene", "deg_logFC", "deg_FDR"]]
+    .dropna(subset=["Gene"])
+    .drop_duplicates("Gene")
+)
+gene_stats["neglog10_fdr"] = -np.log10(gene_stats["deg_FDR"].clip(lower=1e-300))
+gene_stats["node_size"] = 500 + 50 * gene_stats["neglog10_fdr"]
+
+region_stats = (
+    dar_grn_deg[["Region", "Log2FC", "FDR"]]
+    .dropna(subset=["Region"])
+    .drop_duplicates("Region")
+)
+region_stats["neglog10_fdr"] = -np.log10(region_stats["FDR"].clip(lower=1e-300))
+region_stats["node_size"] = 500 + 30 * region_stats["neglog10_fdr"]
+
+nx_tables["Node"]["Gene"] = nx_tables["Node"]["Gene"].merge(
+    gene_stats[["Gene", "deg_logFC", "node_size", "neglog10_fdr"]],
+    on="Gene",
+    how="left",
+)
+
+nx_tables["Node"]["TF"] = (
+    nx_tables["Node"]["TF"]
+    .merge(
+        gene_stats[["Gene", "deg_logFC", "node_size", "neglog10_fdr"]],
+        left_on="TF",
+        right_on="Gene",
+        how="left",
+    )
+    .drop(columns="Gene")
+)
+
+nx_tables["Node"]["Region"] = nx_tables["Node"]["Region"].merge(
+    region_stats[["Region", "Log2FC", "node_size", "neglog10_fdr"]],
+    on="Region",
+    how="left",
+)
+```
+
+```python
 G, pos, edge_tables, node_tables = create_nx_graph(
     nx_tables,
     use_edge_tables=["TF2R", "R2G"],
+    color_edge_by={
+        "TF2R": {
+            "variable": "TF",
+            "category_color": {
+                "RUNX2": "Orange",
+                "BACH2": "Purple",
+                "FOSL1": "Red",
+                "ZEB1": "Brown",
+                "NFE2L2": "Blue",
+                "POU5F1": "Olive",
+            },
+        },
+    },
+    color_node_by={
+        "TF": {
+            "variable": "deg_logFC",
+            "continuous_color": truncated_clr,
+            "v_min": -2,
+            "v_max": 2,
+        },
+        "Gene": {
+            "variable": "deg_logFC",
+            "continuous_color": truncated_clr,
+            "v_min": -2,
+            "v_max": 2,
+        },
+        "Region": {
+            "variable": "Log2FC",
+            "continuous_color": truncated_clr,
+            "v_min": -2,
+            "v_max": 2,
+        },
+    },
+    size_node_by={
+        "TF": {"variable": "node_size"},
+        "Gene": {"variable": "node_size"},
+        "Region": {"variable": "node_size"},
+    },
+    shape_node_by={
+        "TF": {"variable": "fixed_shape", "fixed_shape": "dot"},
+        "Gene": {"variable": "fixed_shape", "fixed_shape": "dot"},
+        "Region": {"variable": "fixed_shape", "fixed_shape": "dot"},
+    },
+    label_size_by={
+        "TF": {"variable": "fixed_label_size", "fixed_label_size": 20.0},
+        "Gene": {"variable": "fixed_label_size", "fixed_label_size": 10.0},
+        "Region": {"variable": "fixed_label_size", "fixed_label_size": 0.0},
+    },
+    layout="kamada_kawai_layout",
+    scale_position_by=250,
+)
+```
+
+```python
+import networkx as nx
+
+plt.figure(figsize=(7, 10))
+
+nx.draw_networkx_edges(G, pos, alpha=0.4, width=1)
+
+tf_nodes = [n for n, d in G.nodes(data=True) if d.get("group") == "TF"]
+gene_nodes = [n for n, d in G.nodes(data=True) if d.get("group") == "Gene"]
+region_nodes = [n for n, d in G.nodes(data=True) if d.get("group") == "Region"]
+
+nx.draw_networkx_nodes(
+    G,
+    pos,
+    nodelist=tf_nodes,
+    node_shape="o",
+    node_size=3500,
+    node_color=[G.nodes[n]["color"] for n in tf_nodes],
+    edgecolors="none",
+    linewidths=0,
 )
 
-plot_networkx(G, pos)
+nx.draw_networkx_nodes(
+    G,
+    pos,
+    nodelist=gene_nodes,
+    node_shape="o",
+    node_size=[G.nodes[n]["size"] * 60 for n in gene_nodes],
+    node_color=[G.nodes[n]["color"] for n in gene_nodes],
+    edgecolors="none",
+    linewidths=0,
+)
+
+nx.draw_networkx_nodes(
+    G,
+    pos,
+    nodelist=region_nodes,
+    node_shape="D",
+    node_size=[G.nodes[n]["size"] * 2 for n in region_nodes],
+    node_color=[G.nodes[n]["color"] for n in region_nodes],
+    edgecolors="none",
+    linewidths=0,
+)
+
+tf_labels = {
+    n: d["label"]
+    for n, d in G.nodes(data=True)
+    if d["group"] == "TF"
+}
+
+gene_labels = {
+    n: d["label"]
+    for n, d in G.nodes(data=True)
+    if d["group"] == "Gene"
+}
+
+nx.draw_networkx_labels(G, pos, labels=tf_labels, font_color="white", font_size=15)
+nx.draw_networkx_labels(G, pos, labels=gene_labels, font_color="white", font_size=10)
+
+plt.axis("off")
+
+norm = mcolors.Normalize(vmin=-2, vmax=2)
+sm = plt.cm.ScalarMappable(cmap=truncated_clr, norm=norm)
+sm.set_array([])
+
+cbar = plt.colorbar(sm, ax=plt.gca(), fraction=0.03, pad=0.02)
+cbar.set_label("log2 fold change\nRUNX2 overexpression vs control", fontsize=12)
+
+plt.tight_layout()
 ```
+
+Example DEG/DAR-coloured RUNX2 perturbation regulatory network:
+
+![RUNX2 eRegulon network](assets/section5_runx2_network.png)
 
 ### Differentially accessible regions and DEG/GRN integration
 
@@ -712,6 +925,8 @@ dar_grn_deg = dar_grn.merge(
 
 ```python
 cell_types = ["RUNX2"]
+top_n = 6
+
 dar_fdr_cutoff = 0.05
 deg_fdr_cutoff = 0.05
 
@@ -732,34 +947,88 @@ plot_df.loc[
     (plot_df["deg_logFC"] < 0),
     "point_colour",
 ] = "darkblue"
+
+plot_df["point_size"] = 10 + 2 * plot_df["neg_log10_deg_FDR"].clip(lower=0).fillna(0)
 ```
 
 ```python
-fig, ax = plt.subplots()
+fig, ax = plt.subplots(figsize=(7, 5))
 
-ax.scatter(
-    plot_df["Log2FC"],
-    plot_df["neg_log10_FDR"],
-    c=plot_df["point_colour"],
-    alpha=0.7,
+for colour, label in [
+    ("grey", "not significantly DE"),
+    ("darkred", "DE up"),
+    ("darkblue", "DE down"),
+]:
+    subdf = plot_df[plot_df["point_colour"] == colour]
+
+    ax.scatter(
+        subdf["Log2FC"],
+        subdf["neg_log10_FDR"],
+        s=subdf["point_size"],
+        c=colour,
+        alpha=0.5,
+        label=label,
+        edgecolors="none",
+    )
+
+label_df = (
+    plot_df
+    .loc[plot_df["Gene"].notna()]
+    .sort_values("neg_log10_FDR", ascending=False)
+    .drop_duplicates("peak")
+    .head(top_n)
 )
 
-ax.axhline(-np.log10(dar_fdr_cutoff), color="black", linestyle="--", linewidth=0.8)
-ax.axvline(0, color="black", linewidth=0.8)
-ax.set_xlabel("DAR log2FC")
-ax.set_ylabel("-log10(DAR FDR)")
+texts = []
 
-label_df = plot_df.sort_values("neg_log10_FDR", ascending=False).head(6)
-texts = [
-    ax.text(row["Log2FC"], row["neg_log10_FDR"], row["Gene"])
-    for _, row in label_df.iterrows()
-]
-adjust_text(texts, ax=ax)
+for _, row in label_df.iterrows():
+    label = f"{row['peak']}\n{row['Gene']}"
+    texts.append(
+        ax.text(
+            row["Log2FC"],
+            row["neg_log10_FDR"],
+            label,
+            fontsize=8,
+        )
+    )
+
+adjust_text(
+    texts,
+    ax=ax,
+    arrowprops=dict(arrowstyle="-", lw=0.5),
+)
+
+ax.axhline(
+    -np.log10(dar_fdr_cutoff),
+    linestyle="--",
+    color="lightgrey",
+    linewidth=1,
+)
+
+ax.set_xlabel("DAR Log2FC")
+ax.set_ylabel("-log10(DAR FDR)")
+ax.set_title("RUNX2\nDifferential accessibility and expression")
+
+ax.legend(
+    title="",
+    bbox_to_anchor=(1.02, 1),
+    loc="upper left",
+    frameon=False,
+)
+
+ax.spines["top"].set_visible(False)
+ax.spines["right"].set_visible(False)
+
+plt.tight_layout()
 ```
 
 ```python
 dar_grn_deg.to_csv("DAR_DEG_GRN.csv")
 ```
+
+Example DAR/DEG volcano plot for RUNX2:
+
+![RUNX2 DAR/DEG volcano plot](assets/section5_dar_deg_volcano.png)
 
 ## Basic Requirements
 
