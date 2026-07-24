@@ -266,7 +266,7 @@ plt.title(f"Day {day_select}")
 
 Example output generated from `data/pool_scvi_celltypist_v2_tutorial_connectivity.h5ad`:
 
-![Observed TF connectivity vs random background](assets/section2_connectivity_histogram.png)
+<img src="assets/section2_connectivity_histogram.png" alt="Observed TF connectivity vs random background" width="560">
 
 The observed within-TF connectivity is shifted above the random background:
 
@@ -289,11 +289,11 @@ The top TFs by observed within-group connectivity are:
 | OTX2 | 35 | 0.0215 | 0.0000 | 0.0215 |
 | NR4A3 | 47 | 0.0207 | 0.0000 | 0.0207 |
 
-![Observed TF connectivity compared with random background](assets/section2_connectivity_scatter.png)
+<img src="assets/section2_connectivity_scatter.png" alt="Observed TF connectivity compared with random background" width="520">
 
 The top connected TF groups occupy local regions of the day 18 UMAP:
 
-![Top TFs by within-group connectivity on UMAP](assets/section2_top_tf_umap.png)
+<img src="assets/section2_top_tf_umap.png" alt="Top TFs by within-group connectivity on UMAP" width="620">
 
 ## 3. Effects Of TF Perturbation
 
@@ -388,7 +388,7 @@ sc.pl.umap(
 
 Example output generated from `data/mdata_full.h5mu`:
 
-![Multiome RNA UMAP by perturbation](assets/section3_perturbation_umap.png)
+<img src="assets/section3_perturbation_umap.png" alt="Multiome RNA UMAP by perturbation" width="620">
 
 The perturbation composition in this object is:
 
@@ -407,7 +407,7 @@ The perturbation composition in this object is:
 
 The H5MU also stores perturbation score columns, which can be visualised on the same RNA UMAP:
 
-![Perturbation enrichment scores on RNA UMAP](assets/section3_enrichment_scores_umap.png)
+<img src="assets/section3_enrichment_scores_umap.png" alt="Perturbation enrichment scores on RNA UMAP" width="700">
 
 ## 4. Combine With In Vivo Atlases
 
@@ -514,7 +514,7 @@ enr_up.res2d.head(10)
 
 Example output generated using the pan-fetal stromal reference from <https://developmental.cellatlas.io/studies/fetal-immune> and `data/ipsc_multiome_tf_degs_wilcoxon.csv`:
 
-![RUNX2 DEG score on pan-fetal stroma UMAP](assets/section4_runx2_score_umap.png)
+<img src="assets/section4_runx2_score_umap.png" alt="RUNX2 DEG score on pan-fetal stroma UMAP" width="620">
 
 The highest-scoring pan-fetal stromal cell types are:
 
@@ -531,7 +531,7 @@ The highest-scoring pan-fetal stromal cell types are:
 | MYOFIBROBLAST | 11238 | 1.267 | 0.322 |
 | FIBROBLAST_XIII | 2892 | 1.200 | 0.258 |
 
-![Top pan-fetal cell types by RUNX2 DEG score](assets/section4_runx2_score_top_celltypes.png)
+<img src="assets/section4_runx2_score_top_celltypes.png" alt="Top pan-fetal cell types by RUNX2 DEG score" width="620">
 
 CellTypist annotation examples are available in:
 
@@ -878,7 +878,7 @@ plt.tight_layout()
 
 Example DEG/DAR-coloured RUNX2 perturbation regulatory network:
 
-![RUNX2 eRegulon network](assets/section5_runx2_network.png)
+<img src="assets/section5_runx2_network.png" alt="RUNX2 eRegulon network" width="680">
 
 ### Differentially accessible regions and DEG/GRN integration
 
@@ -1028,7 +1028,7 @@ dar_grn_deg.to_csv("DAR_DEG_GRN.csv")
 
 Example DAR/DEG volcano plot for RUNX2:
 
-![RUNX2 DAR/DEG volcano plot](assets/section5_dar_deg_volcano.png)
+<img src="assets/section5_dar_deg_volcano.png" alt="RUNX2 DAR/DEG volcano plot" width="620">
 
 ## Basic Requirements
 
