@@ -6,8 +6,11 @@ Created on Sun Jul  5 11:26:44 2026
 """
 
 from dna_features_viewer import GraphicFeature, GraphicRecord
+import pandas as pd
+import matplotlib.pyplot as plt
+from matplotlib.gridspec import GridSpec
 
-features = [
+wt_features = [
     #GraphicFeature(start=0, end=22, strand=1, label="Mock_CLYBL_FW", color="#d6b295"),
     GraphicFeature(start=468, end=489, strand=1, label="IG59", color="#f8d3a9"),
     GraphicFeature(start=500, end=520, strand=1, label="VM19", color="#f7977a"),
@@ -28,14 +31,13 @@ features = [
     #GraphicFeature(start=3122, end=3138, strand=-1, label="Mock_CLYBL_REV", color="#f8d3a9"),
 ]
 
-record = GraphicRecord(
+wt_record = GraphicRecord(
     sequence_length=3138,
-    features=features,
+    features=wt_features,
 )
-import matplotlib.pyplot as plt
 
 fig, ax = plt.subplots(figsize=(14, 3))
-record.plot(
+wt_record.plot(
     ax=ax,
     #feature_level_height=0.4,
     plot_sequence=False,
@@ -47,10 +49,7 @@ plt.show()
 
 
 
-from dna_features_viewer import GraphicFeature, GraphicRecord
-import matplotlib.pyplot as plt
-
-features = [
+lp_features = [
     #GraphicFeature(0, 22, strand=1, label="Mock_CLYBL_FW", color="#d6b295"),
     GraphicFeature(271, 291, strand=1, label="VM85", color="#f7977a"),
     GraphicFeature(468, 489, strand=1, label="IG59", color="#f8d3a9"),
@@ -117,14 +116,14 @@ features = [
     #GraphicFeature(9860, 9876, strand=-1, label="Mock_CLYBL_REV", color="#f8d3a9"),
 ]
 
-record = GraphicRecord(
+lp_record = GraphicRecord(
     sequence_length=9876,
-    features=features,
+    features=lp_features,
 )
 
 fig, ax = plt.subplots(figsize=(18, 3.5))
 
-record.plot(
+lp_record.plot(
     ax=ax,
     #feature_level_height=0.4,
     plot_sequence=False,
@@ -134,14 +133,12 @@ plt.tight_layout()
 plt.savefig("CLYBL_donor_map.png", dpi=600, bbox_inches="tight")
 plt.show()
 
-import pandas as pd
-import matplotlib.pyplot as plt
-from matplotlib.gridspec import GridSpec
+
 
 # Load samtools depth TSV (position, coverage)
 # If your file has no header:
 depth = pd.read_csv(
-    ".\het_f9_lp_allele.tsv",
+    r".\het_f9_lp_allele.tsv",
     sep="\t",
     names=["pos", "depth"]
 )
@@ -170,29 +167,26 @@ ax_cov.plot(
 )
 
 ax_cov.set_ylabel("Depth")
-ax_cov.set_xlim(1, record.sequence_length)
+ax_cov.set_xlim(1, lp_record.sequence_length)
 ax_cov.spines["top"].set_visible(False)
 ax_cov.spines["right"].set_visible(False)
 ax_cov.tick_params(axis="x", labelbottom=False)
 
 # DNA Features Viewer map
-record.plot(ax=ax_map)
-ax_map.set_xlim(1, record.sequence_length)
+lp_record.plot(ax=ax_map)
+ax_map.set_xlim(1, lp_record.sequence_length)
 
 plt.tight_layout()
-plt.savefig("coverage_with_features.png", dpi=600, bbox_inches="tight")
+plt.savefig("coverage_with_features_lp.png", dpi=600, bbox_inches="tight")
 plt.show()
 
 
 
-import pandas as pd
-import matplotlib.pyplot as plt
-from matplotlib.gridspec import GridSpec
 
 # Load samtools depth TSV (position, coverage)
 # If your file has no header:
 depth = pd.read_csv(
-    ".\het_f9_wt_allele.tsv",
+    r".\het_f9_wt_allele.tsv",
     sep="\t",
     names=["pos", "depth"]
 )
@@ -221,15 +215,15 @@ ax_cov.plot(
 )
 
 ax_cov.set_ylabel("Depth")
-ax_cov.set_xlim(1, record.sequence_length)
+ax_cov.set_xlim(1, wt_record.sequence_length)
 ax_cov.spines["top"].set_visible(False)
 ax_cov.spines["right"].set_visible(False)
 ax_cov.tick_params(axis="x", labelbottom=False)
 
 # DNA Features Viewer map
-record.plot(ax=ax_map)
-ax_map.set_xlim(1, record.sequence_length)
+wt_record.plot(ax=ax_map)
+ax_map.set_xlim(1, wt_record.sequence_length)
 
 plt.tight_layout()
-plt.savefig("coverage_with_features.png", dpi=600, bbox_inches="tight")
+plt.savefig("coverage_with_features_wt.png", dpi=600, bbox_inches="tight")
 plt.show()
