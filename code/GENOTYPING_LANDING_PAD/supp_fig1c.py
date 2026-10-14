@@ -6,7 +6,9 @@ Created on Thu Oct  8 10:08:05 2026
 """
 
 from dna_features_viewer import GraphicFeature, GraphicRecord
+import pandas as pd
 import matplotlib.pyplot as plt
+from matplotlib.gridspec import GridSpec
 
 
 features = [
@@ -78,14 +80,11 @@ plt.savefig("CLYBL_egfp_map.png", dpi=600, bbox_inches="tight")
 plt.show()
 
 
-import pandas as pd
-import matplotlib.pyplot as plt
-from matplotlib.gridspec import GridSpec
 
 # Load samtools depth TSV (position, coverage)
 # If your file has no header:
 depth = pd.read_csv(
-    ".\egfp_7k_20_coverage.tsv",
+    r".\egfp_7k_20_coverage.tsv",
     sep="\t",
     names=["pos", "depth"]
 )
